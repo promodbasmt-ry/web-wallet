@@ -1,19 +1,85 @@
-ame: Matrix Strategy Example
-
-on: [push, pull_request]
-
+name: cross-platform-testing
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 jobs:
-    test:
-        runs-on: ${{ matrix.os }}
-       strategy:
-          matrix:
-             os: [ubuntu-latest, windows-latest, macos-latest]
-             node-version: [14, 16]
+  build-release:
+    name: test
+    runs-on: ${{ matrix.os }}
+    env:
+      # For some builds, we use cross to test on 32-bit and big-endian
+      # systems.
+      CARGO: cargo
+      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      TARGET_FLAGS:
+      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+      TARGET_DIR: ./target
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    strategy:
+      matrix:
+        build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-gnu, win32-msvc ]
+        include:
+          - build: linux
+            os: ubuntu-latest
+            rust: nightly
+            target: x86_64-unknown-linux-musl
+          - build: linux-arm
+            os: ubuntu-latest
+            rust: nightly
+            target: arm-unknown-linux-gnueabihf
+          - build: macos
+            os: macos-latest
+            rust: nightly
+            target: x86_64-apple-darwin
+          - build: win-msvc
+            os: windows-2019
+            rust: stable
+            target: x86_64-pc-windows-msvc
+          - build: win-gnu
+            os: windows-2019
+            rust: stable
+            target: x86_64-pc-windows-gnu
+          - build: win32-gnu
+            os: windows-latest
+            rust: stable
+            target: i686-pc-windows-gnu
+          - build: win32-msvc
+            os: windows-latest
+            rust: stable
+            target: i686-pc-windows-msvc
+
     steps:
-        - uses: actions/checkout@v2
-        - name: Set up Node.js
-          uses: actions/setup-node@v2
-          with:
-              node-version: ${{ matrix.node-version }}
-          - run: npm install
-          - run: npm test
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+          target: ${{ matrix.target }}
+          components: rustfmt, clippy
+
+      - name: Show command used for Cargo
+        run: |
+          echo "cargo command is: ${{ env.CARGO }}"
+          echo "target flag is: ${{ env.TARGET_FLAGS }}"
+          echo "target dir is: ${{ env.TARGET_DIR }}"
+
+      - name: Build with all features
+        if: startsWith(matrix.os, 'windows')
+        run: ${{ env.CARGO }} build ${{ env.TARGET_FLAGS }} --all-features
+      - name: Build (and link)
+        run: ${{ env.CARGO }} build ${{ env.TARGET_FLAGS }}
+      - name: Run tests
+        run: ${{ env.CARGO }} test ${{ env.TARGET_FLAGS }}
+      - name: Run fmt
+        run: ${{ env.CARGO }} fmt ${{ env.TARGET_FLAGS }} --all -- --check
+      - name: Run clippy
+        run: ${{ env.CARGO }} clippy ${{ env.TARGET_FLAGS }}
