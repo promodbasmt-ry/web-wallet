@@ -1,38 +1,57 @@
-name: Shared Matrix
+name: Shared Matrix Workflow
+# Alternative names:
+# - Dynamic Matrix Artifact Pipeline
+# - Color Processing with Shared Outputs
+# - Multi-Stage Matrix Artifact Demo
+# - GitHub Actions Matrix Strategy Example
+# - Artifact Generation and Consumption Workflow
+# - Dynamic Job Matrix with Artifacts
+# - Three-Stage Matrix Pipeline
+# - Color Artifact Factory Workflow
+
 on:
   push:
   workflow_dispatch:
 
 jobs:
   define-matrix:
+    name: "🔄 Define Dynamic Matrix"
     runs-on: ubuntu-latest
     outputs:
-      colors: ${{ steps.colors.outputs.colors }}
+      colors: ${{ steps.set-colors.outputs.colors }}
     steps:
-      - name: Define Colors
-        id: colors
+      - name: "🎨 Define Color Palette"
+        id: set-colors
         run: |
-          echo 'colors=["red", "green", "blue"]' >> "$GITHUB_OUTPUT"
+          # Define our color matrix dynamically
+          echo 'colors=["red", "green", "blue", "yellow"]' >> "$GITHUB_OUTPUT"
+          echo "✅ Color matrix defined"
 
   produce-artifacts:
+    name: "🏭 Generate Artifacts (${{ matrix.color }})"
     runs-on: ubuntu-latest
     needs: define-matrix
     strategy:
       matrix:
         color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
     steps:
-      - name: Define Color
+      - name: "🖍️ Create Color File"
         env:
           color: ${{ matrix.color }}
         run: |
+          echo "Creating $color artifact..."
           echo "$color" > color
-      - name: Produce Artifact
+          echo "📦 Artifact content created"
+      
+      - name: "📤 Upload Color Artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.color }}
+          name: color-${{ matrix.color }}
           path: color
+          retention-days: 1
 
   consume-artifacts:
+    name: "📦 Process Artifacts (${{ matrix.color }})"
     runs-on: ubuntu-latest
     needs:
       - define-matrix
@@ -41,10 +60,23 @@ jobs:
       matrix:
         color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
     steps:
-      - name: Retrieve Artifact
+      - name: "📥 Download Color Artifact"
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.color }}
-      - name: Report Color
+          name: color-${{ matrix.color }}
+          
+      - name: "🔍 Inspect Artifact Contents"
         run: |
+          echo "Artifact contents for ${{ matrix.color }}:"
           cat color
+          echo "✅ Verification complete"
+          
+      - name: "📝 Log Color Details"
+        run: |
+          echo "The color ${{ matrix.color }} was processed successfully" >> color-report.txt
+          
+      - name: "📄 Generate Final Report"
+        uses: actions/upload-artifact@v4
+        with:
+          name: color-processing-report
+          path: color-report.txt
