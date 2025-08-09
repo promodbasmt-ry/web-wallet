@@ -1,4 +1,4 @@
-name: CrossMix-OS Release
+name: CrossMix-OS Releas
 
 permissions:
   id-token: "write"
