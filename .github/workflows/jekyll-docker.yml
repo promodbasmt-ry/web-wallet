@@ -1,143 +1,110 @@
-consume-artifacts-3:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+name: Shared Matrix Pipeline
+on:
+  push:
+  workflow_dispatch:
 
-consume-artifacts-4:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+jobs:
+  define-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      colors: ${{ steps.colors.outputs.colors }}
+    steps:
+      - name: Define Colors
+        id: colors
+        run: |
+          echo 'colors=["red", "green", "blue", "yellow"]' >> "$GITHUB_OUTPUT"
 
-consume-artifacts-5:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+  produce-artifacts:
+    runs-on: ubuntu-latest
+    needs: define-matrix
+    strategy:
+      matrix:
+        color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
+    steps:
+      - name: Create Color File
+        env:
+          color: ${{ matrix.color }}
+        run: |
+          echo "$color" > color.txt
+          echo "RGB value for $color" > metadata.txt
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: color-${{ matrix.color }}
+          path: |
+            color.txt
+            metadata.txt
 
-consume-artifacts-6:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+  # Consumer 1: Basic artifact usage
+  consume-basic:
+    runs-on: ubuntu-latest
+    needs: produce-artifacts
+    strategy:
+      matrix:
+        color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: color-${{ matrix.color }}
+      - name: Display Color
+        run: |
+          echo "Basic Consumer: The color is $(cat color.txt)"
 
-consume-artifacts-7:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+  # Consumer 2: Process artifacts differently
+  consume-process:
+    runs-on: ubuntu-latest
+    needs: produce-artifacts
+    strategy:
+      matrix:
+        color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
+    steps:
+      - name: Get Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: color-${{ matrix.color }}
+      - name: Process Color
+        run: |
+          echo "Processing Consumer:"
+          echo "Main color: $(cat color.txt)"
+          echo "Metadata: $(cat metadata.txt)"
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "### Processed ${{ matrix.color }}" >> $GITHUB_STEP_SUMMARY
 
-consume-artifacts-8:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+  # Consumer 3: Conditional processing
+  consume-conditional:
+    runs-on: ubuntu-latest
+    needs: produce-artifacts
+    strategy:
+      matrix:
+        color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
+    steps:
+      - name: Fetch Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: color-${{ matrix.color }}
+      - name: Handle Primary Colors
+        if: contains(['red', 'blue', 'green'], matrix.color)
+        run: |
+          echo "Primary color detected: ${{ matrix.color }}"
+      - name: Handle Secondary Colors
+        if: contains(['yellow', 'purple', 'orange'], matrix.color)
+        run: |
+          echo "Secondary color detected: ${{ matrix.color }}"
 
-consume-artifacts-9:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
-
-consume-artifacts-10:
-  runs-on: ubuntu-latest
-  needs:
-    - define-matrix
-    - produce-artifacts
-  strategy:
-    matrix:
-      color: ${{ fromJSON(needs.define-matrix.outputs.colors) }}
-  steps:
-    - name: Retrieve Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.color }}
-    - name: Report Color Differently
-      run: |
-        echo "The color is: $(cat color)"
-        echo "This is another consumer job"
+  # Consumer 4: Aggregation job
+  consume-aggregate:
+    runs-on: ubuntu-latest
+    needs: 
+      - consume-basic
+      - consume-process
+      - consume-conditional
+    steps:
+      - name: Generate Report
+        run: |
+          echo "# Color Processing Report" >> $GITHUB_STEP_SUMMARY
+          echo "All color processing jobs have completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "Processed colors: red, green, blue, yellow" >> $GITHUB_STEP_SUMMARY
+      - name: Final Output
+        run: |
+          echo "Pipeline completed all color processing"
